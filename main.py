@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw
+
 black_pix = (0, 0, 0, 255) # считаем что поля, крестики, нолики имеют такой цвет
 image = Image.open('image.png')  # Открываем изображение
 draw = ImageDraw.Draw(image)  # Создаем инструмент для рисования
@@ -6,7 +7,7 @@ width = image.size[0]  # Определяем ширину
 height = image.size[1]  # Определяем высоту
 pix = image.load()  # Выгружаем значения пикселей
 
-#найдем границы игрового поля
+# Найдем границы игрового поля
 area = {"top": 0, "bot": 0, "left": 0, "right": 0}
 def find_top():
     for y in range(height):
@@ -36,8 +37,7 @@ find_top()
 find_bot()
 find_left()
 find_right()
-print(area)
-print(pix[10,0])
+
 # определяем границы каждой клетки
 cells = [0] * 9 
 for i in range(9):
@@ -51,9 +51,9 @@ for i in range(9):
 # если в центре клетки черный пиксель, то в ней крестик, что и проверяется в первую очередь
 # далее алгоритм работает следующим образом:
 # если при проходе из левой границу в правую мы встретили четыре или три черные линии, то там круг
-# иначе там одна или две ничего не стоит
+# иначе там одна или две черные линии, то есть ничего не стоит
 # сделал именно так, так как не захотел отсекать части рамок, 
-# а у нас при определении границ клеток части рамок заходили
+# а у нас при определении границ клеток части рамок заходят в них
 for i in range(9):
     ycell = (cells[i]["top"] + cells[i]["bot"]) // 2
     if pix[(cells[i]["left"] + cells[i]["right"]) // 2, ycell] == black_pix:
@@ -72,41 +72,31 @@ for i in range(9):
         if count == 3 or count == 4:
             cells[i]["value"] = 0
 
-#определяем победителя      
+# Определяем победителя и сразу запоминаем координаты начала и конца линии, которую должны будем провести    
 def check_line(first, second, third):
     if cells[first]["value"] == cells[second]["value"] and cells[second]["value"] == cells[third]["value"]:
         return True
-win_numbers = [0]
+
 line = (0, 0, 0, 0)
 for n in range(3):
     if check_line(n * 3, n * 3 + 1, n * 3 + 2):
-        win_numbers = [n * 3, n * 3 + 1, n * 3 + 2]
         line = (cells[n * 3]["left"], (cells[n * 3]["top"] + cells[n * 3]["bot"]) // 2, cells[n * 3 + 2]["right"], (cells[n * 3 + 2]["top"] + cells[n * 3 + 2]["bot"]) // 2)
         break
     if check_line(n, n + 3, n + 6):
-        win_numbers = [n, n + 3, n + 6]
         line = ((cells[n]["left"] + cells[n]["right"]) // 2, cells[n]["top"], (cells[n + 6]["left"] + cells[n + 6]["right"]) // 2, cells[n + 6]["bot"])
         break
 if check_line(0, 4, 8):
-    win_numbers = [0, 4, 8]
     line = (cells[0]["left"], cells[0]["top"], cells[8]["right"], cells[8]["bot"])
 if check_line(2, 4, 6):
-    win_numbers = [2, 4, 6]
     line = (cells[6]["left"], cells[6]["bot"], cells[2]["right"], cells[2]["top"])
-if win_numbers == [0]:
+if line == (0, 0, 0, 0):
     print("no winner")
-    sys.exit(0)
+    exit(0)
 
-
-
-
-print(line)
-print(win_numbers)
-
+# Рисуем результат 
 for x in range(width):
    for y in range(height):
         draw.point((x, y), pix[x,y])
 draw.line(line, fill=(0, 0, 0, 255), width=7)
-print([width, height])
 
-image.save("result.jpg", "png") #не забываем сохранить изображение
+image.save("result.png", "png") 
